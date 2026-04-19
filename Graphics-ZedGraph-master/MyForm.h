@@ -25,6 +25,7 @@
 
 
 
+
 static std::function<double(double)> createSplineFunction(
 	const std::vector<double>& grid_x,      // узлы
 	const std::vector<double>& a,      // коэффициенты ai
@@ -202,12 +203,6 @@ static std::function<double(double)> makeSpline(std::function<double(double)> F,
 	out_a = a; out_b = b; out_c = c; out_d = d; out_grid = grid_values;
 	return createSplineFunction(grid_values, a, b, c, d);
 }
-
-
-
-
-
-
 
 
 
@@ -1056,6 +1051,7 @@ private: System::Windows::Forms::Label^ label3;
 	private:
 		// ============ ТЕСТОВАЯ ЗАДАЧА ============
 		// точное решение тестовой задачи
+<<<<<<< HEAD
 
 		
 
@@ -1063,6 +1059,191 @@ private: System::Windows::Forms::Label^ label3;
 
 
 		
+=======
+
+		
+
+
+
+
+		static std::function<double(double)> createSplineFunction(
+			const std::vector<double>& grid_x,      // узлы
+			const std::vector<double>& a,      // коэффициенты ai
+			const std::vector<double>& b,      // коэффициенты bi
+			const std::vector<double>& c,      // коэффициенты ci
+			const std::vector<double>& d       // коэффициенты di
+		) {
+			// Захватываем все векторы по значению
+			return [grid_x, a, b, c, d](double x) -> double {
+
+				//System::Diagnostics::Debug::WriteLine(grid_x.front() + " | " + x + " | " + grid_x.back());
+				if (x < grid_x.front() || grid_x.back() < x) {
+					if (x > grid_x.back() + 0.01) {
+						throw "x is out of bounds [a,b]";
+					}
+					x = grid_x.back();
+				}
+				
+
+				//  x_i-1 <= x <= x_i
+				int i = 1;
+				while (!(grid_x[i - 1] <= x && x <= grid_x[i]) && i < grid_x.size()) {
+					i++;
+				}
+				
+
+				
+				double dx = x - grid_x[i];  // (x - xi)
+
+				// S(x) = ai + bi*dx + (ci/2)*dx^2 + (di/6)*dx^3
+				return a[i-1] + b[i-1] * dx + c[i] / 2.0 * dx * dx + d[i-1] / 6.0 * dx * dx * dx;
+			};
+		}
+
+		// сетка постоянная == есть формула адаптированная под кубич сплайн с пост шагом
+	// для решения трехдиаг системы - нужно использовать метод прогонки
+	// можно юзать адаптированные формулы которые показвыал С.А.
+	// есть 3 задачи
+	// 1 - тестовая функция
+	// надо найти сплайн который интерполирует функцию F(x)
+	// 1) F(x) = фи(x)
+	// Мы находим всегда сплайн с естественными граничными усл
+	// ( фи(х) в первой задаче - сплайн с естетвенными граничными усл
+	// причем сплайн на опред сетке с опред граничн усл - существует и единственен
+	// сама функция - сплайн - поэтому надо построить сплайн (определить все коэфф)
+	// и проверить (раскрыть скобки и сравнить с тем,что получаем)
+	// n = 2 - число участков разбиения [a,b] , кол-во узлов n+1
+	// 
+	// 2) F(x) = f(x)
+	// у нас первый вариант - смотрим f(x) под номером №1 в конце файла
+	// 
+	// 3) к функции нашего варианта добавляем +cos(10x) и строим сплайн 
+	// на равномерной сетке с пост шагом с естеств граничн усл
+	// 
+	// 
+	// 
+	// 
+	//
+
+		// для этой тестовой функции в отчете 
+		// нужно написать коэффициенты ai,bi,ci,di
+		// раскрыть скобки
+		// получить ту же самую функцию
+		// (должно совпасть при n = 2)
+
+		static double fi(double x) {
+			double a = -1;
+			double b = 1;
+			if (x < a || x > b) { 
+				throw "Function is not defined out of [a,b]";
+			}
+
+			if (-1 <= x && x <= 0) {
+				return x * x * x + 3 * x * x;
+			}
+
+			if (0 <= x && x <= 1) {
+				return -x * x * x + 3 * x * x;
+			}
+
+			return -9999999999;
+		}
+
+
+		static double fi_d1(double x) { // Первая производная
+			if (x < -1 || x > 1) throw "Out of bounds";
+			if (x <= 0) return 3 * x * x + 6 * x;
+			return -3 * x * x + 6 * x;
+		}
+
+		static double fi_d2(double x) { // Вторая производная
+			if (x < -1 || x > 1) throw "Out of bounds";
+			if (x <= 0) return 6 * x + 6;
+			return -6 * x + 6;
+		}
+
+
+
+		static std::function<double(double)> makeSpline(std::function<double(double)> F,
+			double a_edge, double b_edge, double n, double mu1, double mu2,
+			std::vector<double>& out_a, std::vector<double>& out_b,
+			std::vector<double>& out_c, std::vector<double>& out_d, std::vector<double>& out_grid) {
+
+			// F(x) - сама функция которую интерполируем
+			// double a,b - левая и правая границы
+			// n - кол-во интервалов разбиения отрезка [a,b] (узлов сетки n+1)
+			// mu1, mu2 - граничные условия (у нас: mu1=mu2=0)
+
+			double h = (b_edge - a_edge) / n; // постоянный шаг
+
+			std::vector<double> F_values(n+1);
+			std::vector<double> grid_values(n+1);
+
+			// gn - greed node (узел сетки)
+			double gn = a_edge;
+			for (int i = 0; i < n+1; i++) {
+
+				if (gn > b_edge) {
+					throw "This leads to fall in case: fi,[-1,1] , gn over 1";
+				}
+
+				F_values[i] = F(gn);
+				grid_values[i] = gn;
+				
+
+				
+				gn += h;
+			}
+
+			// сводим интерполяцию к методу прогонки
+			std::vector<double> c(n+1);
+			c[0] = mu1; // c0
+			c[n] = mu2; // cn
+
+			double kappa1 = 0;
+			std::vector<double> alpha(n);
+			std::vector<double> betta(n);
+			alpha[0] = kappa1; // alpha1
+			betta[0] = mu1; // betta1
+
+
+			for (int i = 0; i <= n-2; i++) {
+				double fxxi = (F_values[i+1+1]-2*F_values[i+1]+F_values[i-1+1]) / (h * h);
+
+				alpha[i+1] = -1/(4+alpha[i]);
+				betta[i+1] = (6*fxxi-betta[i])/(4+alpha[i]);
+			}
+
+			// double kappa2 = 0; не нужен (у нас c[n] = 0)
+
+			for (int i = n-1; i >= 1; i--) {
+				// c_n-1 =    alph_n      *    c_n      +   betta_n   ???
+				// c[n-2] = alpha[n-1]    *   c[n-1]    +  betta[n-1] ???
+				c[i] = alpha[i] * c[i] + betta[i];
+			}
+
+			std::vector<double> a(n);
+			std::vector<double> d(n);
+			std::vector<double> b(n);
+
+			for (int i = 0; i <n; i++) {
+				a[i] = F_values[i+1];
+				d[i] = (c[i+1] - c[i]) / h;
+				b[i] = (F_values[i+1] - F_values[i]) / h + c[i+1] * h / 3.0 + c[i] * h / 6.0;
+			}
+
+			// now all coeffs ai,bi,ci,di - found
+			// now cubic Spline is
+			//         {  Si(x) = ai + bi*(x-xi)+ci/2 * (x-xi)^2 + di/6 * (x-xi)^3
+			// S(x) =  {
+			//         {  xi from [x_i-1, x_i]
+
+			// now need to create labda which will represent cubic Spline logic
+
+			out_a = a; out_b = b; out_c = c; out_d = d; out_grid = grid_values;
+			return createSplineFunction(grid_values, a, b, c, d);
+		}
+>>>>>>> 68d6f8e9973aacd7e696d03656f0eeb57770193e
 
 
 
