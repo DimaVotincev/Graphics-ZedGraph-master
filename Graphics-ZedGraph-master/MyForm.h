@@ -77,7 +77,7 @@ static std::function<double(double)> createSplineFunction(
 			i++;
 		}
 
-		// Вычисляем dx относительно ПРАВОЙ границы x_i (согласно вашей логике в makeSpline)
+		// Вычисляем dx относительно ПРАВОЙ границы x_i
 		double dx = x - grid_x[i];
 
 		// S(x) = ai + bi*dx + (ci/2)*dx^2 + (di/6)*dx^3
@@ -119,7 +119,7 @@ static std::function<double(double)> makeSpline(std::function<double(double)> F,
 		betta[i] = (f_xx - (i == 1 ? mu1 : betta[i - 1])) / (i == 1 ? 4.0 : denom);
 	}
 
-	// Упрощенная и надежная прогонка:
+	// Прогонка:
 	std::vector<double> A(N + 1, 1.0), B(N + 1, 4.0), C_coeff(N + 1, 1.0), R(N + 1);
 	for (int i = 1; i < N; i++)
 		R[i] = 6.0 * (F_values[i + 1] - 2.0 * F_values[i] + F_values[i - 1]) / (h * h);
@@ -1392,7 +1392,7 @@ private: System::Windows::Forms::Label^ label12;
 				grid_v[i + 1], // x_i
 				Math::Round(a_v[i], 5),
 				Math::Round(b_v[i], 5),
-				Math::Round(c_v[i + 1], 5), // Ваша формула использует c[i] (сдвинутый)
+				Math::Round(c_v[i + 1], 5), 
 				Math::Round(d_v[i], 5)
 			);
 		}
