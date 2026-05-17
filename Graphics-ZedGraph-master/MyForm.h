@@ -60,7 +60,8 @@ static void MBP(
 	int n, int m,
 	std::vector<double>& x,
 	std::vector<double>& y,
-	std::vector<std::vector<double>>& V) {
+	std::vector<std::vector<double>>& V) 
+{
 	double hh = h * h;
 	double kk = k * k;
 	double A = -2 * (1 / hh + 1 / kk);
@@ -146,15 +147,19 @@ static void solveDirichleForPuasson(
 	// узлы сетки
 	std::vector<double> x(n + 1);
 	std::vector<double> y(m + 1);
+
+
 	for (int i = 0; i < n+1; i++) {
 		x[i] = a + i * h;
 	}
+
 	for (int j = 0; j < m+1; j++) {
 		y[j] = c + j * k;
 	}
 
 	
 	// u_star
+
 	for (int i = 0; i < n+1; ++i) {
 		for (int j = 0; j < m+1; ++j) {
 			u_star[i][j] = u_star_func(x[i],y[j]);
@@ -167,20 +172,29 @@ static void solveDirichleForPuasson(
 	// std::vector<std::vector<double>> V((n + 1), std::vector<double>(m+1,1.0));
 
 	// ========== граничные условия (начало) 
-	// !!!!! вообще должна быть линейная интерполяция граничных условий
-	// а это разве не линейная интерполяция?
-	for (int j = 1; j <= m - 1; j++) {
+
+	for (int j = 0; j <= m; j++) {
 		double yj = c + j * k;
 		V[0][j] = mu1_func(yj,a,b);
 		V[n][j] = mu2_func(yj,a,b);
 	}
 
-	for (int i = 1; i <= n - 1; i++) {
+	for (int i = 0; i <= n; i++) {
 		double xi = a+ i * h;
 		V[i][0] = mu3_func(xi,c,d);
 		V[i][m] = mu4_func(xi,c,d);
 	}
 	// ========== граничные условия (конец)
+
+
+	// ========== интерполяция внутренних узлов (линейно по Y)
+
+	for (int i = 1; i <= n - 1; ++i) {
+
+		for (int j = 1; j <= m - 1; ++j) {
+			V[i][j] = mu3_func(x[i],c,d) + ((mu4_func(x[i],c,d)-mu3_func(x[i],c,d))/m) * j;
+		}
+	}
 
 	
 	bool flag = true;
@@ -201,9 +215,10 @@ static void solveDirichleForPuasson(
 		}
 
 		// поиск точности eps_S
+
 		for (int i = 0; i < n+1; ++i) {
 			for (int j = 0; j < m + 1; ++j) {
-				eps_N = std::max(eps_N, abs(V[i][j]-V_prev[i][j]));
+				eps_N = std::max(eps_N, std::abs(V[i][j]-V_prev[i][j]));
 			}
 		}
 
@@ -216,9 +231,10 @@ static void solveDirichleForPuasson(
 	}
 
 	double max_err = -1;
+
 	for (int i = 0; i < n + 1; ++i) {
 		for (int j = 0; j < m + 1; ++j) {
-			difference[i][j] = u_star[i][j] - V[i][j];
+			difference[i][j] = std::abs(u_star[i][j] - V[i][j]);
 			if (max_err < difference[i][j]) {
 				max_err = difference[i][j];
 				x_max_err = x[i];
@@ -233,10 +249,11 @@ static void solveDirichleForPuasson(
 	double hh = h * h;
 	double kk = k * k;
 	R_norm = -1;
-	for (int i = 1; i < n-1; ++i) {
-		for (int j = 1; j < m - 1; ++j) {
+
+	for (int i = 1; i < n; ++i) {
+		for (int j = 1; j < m; ++j) {
 			double R = (V[i + 1][j] - 2 * V[i][j] + V[i - 1][j]) / hh + (V[i][j + 1] - 2 * V[i][j] + V[i][j - 1]) / kk + f_xy_func(x[i],y[j]);
-			R_norm = std::max(R_norm,R);
+			R_norm = std::max(R_norm,std::abs(R));
 		}
 	}
 
@@ -311,7 +328,9 @@ namespace Graph {
 		}
 
 	private: System::Windows::Forms::Button^ button1;
-	private: System::Windows::Forms::DataGridView^ dataGridView1;
+	private: System::Windows::Forms::DataGridView^ dataGridView2;
+
+
 
 
 
@@ -529,6 +548,38 @@ private: System::Windows::Forms::Label^ label8;
 private: System::Windows::Forms::TextBox^ textBox3;
 private: System::Windows::Forms::Label^ label9;
 private: System::Windows::Forms::TextBox^ textBox4;
+private: System::Windows::Forms::DataGridView^ dataGridView3;
+
+
+private: System::Windows::Forms::DataGridViewTextBoxColumn^ dataGridViewTextBoxColumn1;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^ dataGridViewTextBoxColumn2;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^ dataGridViewTextBoxColumn3;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^ dataGridViewTextBoxColumn4;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^ dataGridViewTextBoxColumn5;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^ dataGridViewTextBoxColumn6;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^ dataGridViewTextBoxColumn7;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^ dataGridViewTextBoxColumn8;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^ dataGridViewTextBoxColumn9;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^ dataGridViewTextBoxColumn10;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^ dataGridViewTextBoxColumn11;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^ dataGridViewTextBoxColumn12;
+private: System::Windows::Forms::DataGridView^ dataGridView1;
+
+
+private: System::Windows::Forms::DataGridViewTextBoxColumn^ dataGridViewTextBoxColumn13;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^ dataGridViewTextBoxColumn14;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^ dataGridViewTextBoxColumn15;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^ dataGridViewTextBoxColumn16;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^ dataGridViewTextBoxColumn17;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^ dataGridViewTextBoxColumn18;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^ dataGridViewTextBoxColumn19;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^ dataGridViewTextBoxColumn20;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^ dataGridViewTextBoxColumn21;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^ dataGridViewTextBoxColumn22;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^ dataGridViewTextBoxColumn23;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^ dataGridViewTextBoxColumn24;
+private: System::Windows::Forms::Label^ label10;
+private: System::Windows::Forms::Label^ label11;
 
 
 
@@ -595,7 +646,7 @@ private: System::Windows::Forms::TextBox^ textBox4;
 		{
 			this->components = (gcnew System::ComponentModel::Container());
 			this->button1 = (gcnew System::Windows::Forms::Button());
-			this->dataGridView1 = (gcnew System::Windows::Forms::DataGridView());
+			this->dataGridView2 = (gcnew System::Windows::Forms::DataGridView());
 			this->Column1 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
 			this->X = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
 			this->F_2 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
@@ -633,6 +684,36 @@ private: System::Windows::Forms::TextBox^ textBox4;
 			this->textBox3 = (gcnew System::Windows::Forms::TextBox());
 			this->label9 = (gcnew System::Windows::Forms::Label());
 			this->textBox4 = (gcnew System::Windows::Forms::TextBox());
+			this->dataGridView3 = (gcnew System::Windows::Forms::DataGridView());
+			this->dataGridViewTextBoxColumn1 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->dataGridViewTextBoxColumn2 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->dataGridViewTextBoxColumn3 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->dataGridViewTextBoxColumn4 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->dataGridViewTextBoxColumn5 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->dataGridViewTextBoxColumn6 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->dataGridViewTextBoxColumn7 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->dataGridViewTextBoxColumn8 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->dataGridViewTextBoxColumn9 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->dataGridViewTextBoxColumn10 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->dataGridViewTextBoxColumn11 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->dataGridViewTextBoxColumn12 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->dataGridView1 = (gcnew System::Windows::Forms::DataGridView());
+			this->dataGridViewTextBoxColumn13 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->dataGridViewTextBoxColumn14 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->dataGridViewTextBoxColumn15 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->dataGridViewTextBoxColumn16 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->dataGridViewTextBoxColumn17 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->dataGridViewTextBoxColumn18 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->dataGridViewTextBoxColumn19 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->dataGridViewTextBoxColumn20 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->dataGridViewTextBoxColumn21 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->dataGridViewTextBoxColumn22 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->dataGridViewTextBoxColumn23 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->dataGridViewTextBoxColumn24 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->label10 = (gcnew System::Windows::Forms::Label());
+			this->label11 = (gcnew System::Windows::Forms::Label());
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataGridView2))->BeginInit();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataGridView3))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataGridView1))->BeginInit();
 			this->SuspendLayout();
 			// 
@@ -647,21 +728,21 @@ private: System::Windows::Forms::TextBox^ textBox4;
 			this->button1->UseVisualStyleBackColor = true;
 			this->button1->Click += gcnew System::EventHandler(this, &MyForm::button1_Click);
 			// 
-			// dataGridView1
+			// dataGridView2
 			// 
-			this->dataGridView1->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
-			this->dataGridView1->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(12) {
+			this->dataGridView2->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
+			this->dataGridView2->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(12) {
 				this->Column1,
 					this->X, this->F_2, this->Column2, this->Column3, this->Column4, this->Column5, this->Column6, this->Column7, this->F_1, this->Column8,
 					this->Column9
 			});
-			this->dataGridView1->Location = System::Drawing::Point(1074, 64);
-			this->dataGridView1->Margin = System::Windows::Forms::Padding(5, 6, 5, 6);
-			this->dataGridView1->Name = L"dataGridView1";
-			this->dataGridView1->RowHeadersVisible = false;
-			this->dataGridView1->RowHeadersWidth = 51;
-			this->dataGridView1->Size = System::Drawing::Size(1455, 1247);
-			this->dataGridView1->TabIndex = 2;
+			this->dataGridView2->Location = System::Drawing::Point(1776, 64);
+			this->dataGridView2->Margin = System::Windows::Forms::Padding(5, 6, 5, 6);
+			this->dataGridView2->Name = L"dataGridView2";
+			this->dataGridView2->RowHeadersVisible = false;
+			this->dataGridView2->RowHeadersWidth = 51;
+			this->dataGridView2->Size = System::Drawing::Size(753, 638);
+			this->dataGridView2->TabIndex = 2;
 			// 
 			// Column1
 			// 
@@ -790,7 +871,7 @@ private: System::Windows::Forms::TextBox^ textBox4;
 			this->labelTestInfo->AutoSize = true;
 			this->labelTestInfo->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 12, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point,
 				static_cast<System::Byte>(204)));
-			this->labelTestInfo->Location = System::Drawing::Point(98, 978);
+			this->labelTestInfo->Location = System::Drawing::Point(5, 966);
 			this->labelTestInfo->Margin = System::Windows::Forms::Padding(4, 0, 4, 0);
 			this->labelTestInfo->Name = L"labelTestInfo";
 			this->labelTestInfo->Size = System::Drawing::Size(208, 25);
@@ -826,7 +907,7 @@ private: System::Windows::Forms::TextBox^ textBox4;
 			this->label20->AutoSize = true;
 			this->label20->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 19.8F, static_cast<System::Drawing::FontStyle>((System::Drawing::FontStyle::Bold | System::Drawing::FontStyle::Underline)),
 				System::Drawing::GraphicsUnit::Point, static_cast<System::Byte>(204)));
-			this->label20->Location = System::Drawing::Point(107, 912);
+			this->label20->Location = System::Drawing::Point(14, 900);
 			this->label20->Margin = System::Windows::Forms::Padding(4, 0, 4, 0);
 			this->label20->Name = L"label20";
 			this->label20->Size = System::Drawing::Size(209, 38);
@@ -853,12 +934,12 @@ private: System::Windows::Forms::TextBox^ textBox4;
 			this->label33->AutoSize = true;
 			this->label33->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 12, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point,
 				static_cast<System::Byte>(204)));
-			this->label33->Location = System::Drawing::Point(1910, 33);
+			this->label33->Location = System::Drawing::Point(1085, 33);
 			this->label33->Margin = System::Windows::Forms::Padding(4, 0, 4, 0);
 			this->label33->Name = L"label33";
-			this->label33->Size = System::Drawing::Size(103, 25);
+			this->label33->Size = System::Drawing::Size(124, 25);
 			this->label33->TabIndex = 70;
-			this->label33->Text = L"Таблица ";
+			this->label33->Text = L"Таблица u*";
 			this->label33->Click += gcnew System::EventHandler(this, &MyForm::label33_Click);
 			// 
 			// label36
@@ -915,7 +996,7 @@ private: System::Windows::Forms::TextBox^ textBox4;
 			this->textBoxEps->Name = L"textBoxEps";
 			this->textBoxEps->Size = System::Drawing::Size(99, 28);
 			this->textBoxEps->TabIndex = 77;
-			this->textBoxEps->Text = L"0,00000001";
+			this->textBoxEps->Text = L"0,000001";
 			// 
 			// label4
 			// 
@@ -1029,11 +1110,249 @@ private: System::Windows::Forms::TextBox^ textBox4;
 			this->textBox4->TabIndex = 84;
 			this->textBox4->Text = L"1";
 			// 
+			// dataGridView3
+			// 
+			this->dataGridView3->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
+			this->dataGridView3->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(12) {
+				this->dataGridViewTextBoxColumn1,
+					this->dataGridViewTextBoxColumn2, this->dataGridViewTextBoxColumn3, this->dataGridViewTextBoxColumn4, this->dataGridViewTextBoxColumn5,
+					this->dataGridViewTextBoxColumn6, this->dataGridViewTextBoxColumn7, this->dataGridViewTextBoxColumn8, this->dataGridViewTextBoxColumn9,
+					this->dataGridViewTextBoxColumn10, this->dataGridViewTextBoxColumn11, this->dataGridViewTextBoxColumn12
+			});
+			this->dataGridView3->Location = System::Drawing::Point(656, 756);
+			this->dataGridView3->Margin = System::Windows::Forms::Padding(5, 6, 5, 6);
+			this->dataGridView3->Name = L"dataGridView3";
+			this->dataGridView3->RowHeadersVisible = false;
+			this->dataGridView3->RowHeadersWidth = 51;
+			this->dataGridView3->Size = System::Drawing::Size(1873, 568);
+			this->dataGridView3->TabIndex = 88;
+			// 
+			// dataGridViewTextBoxColumn1
+			// 
+			this->dataGridViewTextBoxColumn1->HeaderText = L"i";
+			this->dataGridViewTextBoxColumn1->MinimumWidth = 6;
+			this->dataGridViewTextBoxColumn1->Name = L"dataGridViewTextBoxColumn1";
+			this->dataGridViewTextBoxColumn1->Width = 60;
+			// 
+			// dataGridViewTextBoxColumn2
+			// 
+			this->dataGridViewTextBoxColumn2->HeaderText = L"x_i";
+			this->dataGridViewTextBoxColumn2->MinimumWidth = 6;
+			this->dataGridViewTextBoxColumn2->Name = L"dataGridViewTextBoxColumn2";
+			this->dataGridViewTextBoxColumn2->ReadOnly = true;
+			this->dataGridViewTextBoxColumn2->Width = 125;
+			// 
+			// dataGridViewTextBoxColumn3
+			// 
+			this->dataGridViewTextBoxColumn3->HeaderText = L"V_i";
+			this->dataGridViewTextBoxColumn3->MinimumWidth = 6;
+			this->dataGridViewTextBoxColumn3->Name = L"dataGridViewTextBoxColumn3";
+			this->dataGridViewTextBoxColumn3->ReadOnly = true;
+			this->dataGridViewTextBoxColumn3->Width = 200;
+			// 
+			// dataGridViewTextBoxColumn4
+			// 
+			this->dataGridViewTextBoxColumn4->HeaderText = L"V_2i";
+			this->dataGridViewTextBoxColumn4->MinimumWidth = 6;
+			this->dataGridViewTextBoxColumn4->Name = L"dataGridViewTextBoxColumn4";
+			this->dataGridViewTextBoxColumn4->Width = 125;
+			// 
+			// dataGridViewTextBoxColumn5
+			// 
+			this->dataGridViewTextBoxColumn5->HeaderText = L"v_i-v_2i";
+			this->dataGridViewTextBoxColumn5->MinimumWidth = 6;
+			this->dataGridViewTextBoxColumn5->Name = L"dataGridViewTextBoxColumn5";
+			this->dataGridViewTextBoxColumn5->Width = 125;
+			// 
+			// dataGridViewTextBoxColumn6
+			// 
+			this->dataGridViewTextBoxColumn6->HeaderText = L"ОЛП";
+			this->dataGridViewTextBoxColumn6->MinimumWidth = 6;
+			this->dataGridViewTextBoxColumn6->Name = L"dataGridViewTextBoxColumn6";
+			this->dataGridViewTextBoxColumn6->Width = 125;
+			// 
+			// dataGridViewTextBoxColumn7
+			// 
+			this->dataGridViewTextBoxColumn7->HeaderText = L"h_i";
+			this->dataGridViewTextBoxColumn7->MinimumWidth = 6;
+			this->dataGridViewTextBoxColumn7->Name = L"dataGridViewTextBoxColumn7";
+			this->dataGridViewTextBoxColumn7->Width = 125;
+			// 
+			// dataGridViewTextBoxColumn8
+			// 
+			this->dataGridViewTextBoxColumn8->HeaderText = L"C1";
+			this->dataGridViewTextBoxColumn8->MinimumWidth = 6;
+			this->dataGridViewTextBoxColumn8->Name = L"dataGridViewTextBoxColumn8";
+			this->dataGridViewTextBoxColumn8->Width = 125;
+			// 
+			// dataGridViewTextBoxColumn9
+			// 
+			this->dataGridViewTextBoxColumn9->HeaderText = L"C2";
+			this->dataGridViewTextBoxColumn9->MinimumWidth = 6;
+			this->dataGridViewTextBoxColumn9->Name = L"dataGridViewTextBoxColumn9";
+			this->dataGridViewTextBoxColumn9->Width = 125;
+			// 
+			// dataGridViewTextBoxColumn10
+			// 
+			this->dataGridViewTextBoxColumn10->HeaderText = L"u_i";
+			this->dataGridViewTextBoxColumn10->MinimumWidth = 6;
+			this->dataGridViewTextBoxColumn10->Name = L"dataGridViewTextBoxColumn10";
+			this->dataGridViewTextBoxColumn10->ReadOnly = true;
+			this->dataGridViewTextBoxColumn10->Width = 125;
+			// 
+			// dataGridViewTextBoxColumn11
+			// 
+			this->dataGridViewTextBoxColumn11->HeaderText = L"|u_i - v_i |";
+			this->dataGridViewTextBoxColumn11->MinimumWidth = 6;
+			this->dataGridViewTextBoxColumn11->Name = L"dataGridViewTextBoxColumn11";
+			this->dataGridViewTextBoxColumn11->Width = 125;
+			// 
+			// dataGridViewTextBoxColumn12
+			// 
+			this->dataGridViewTextBoxColumn12->HeaderText = L"--";
+			this->dataGridViewTextBoxColumn12->MinimumWidth = 6;
+			this->dataGridViewTextBoxColumn12->Name = L"dataGridViewTextBoxColumn12";
+			this->dataGridViewTextBoxColumn12->Width = 125;
+			// 
+			// dataGridView1
+			// 
+			this->dataGridView1->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
+			this->dataGridView1->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(12) {
+				this->dataGridViewTextBoxColumn13,
+					this->dataGridViewTextBoxColumn14, this->dataGridViewTextBoxColumn15, this->dataGridViewTextBoxColumn16, this->dataGridViewTextBoxColumn17,
+					this->dataGridViewTextBoxColumn18, this->dataGridViewTextBoxColumn19, this->dataGridViewTextBoxColumn20, this->dataGridViewTextBoxColumn21,
+					this->dataGridViewTextBoxColumn22, this->dataGridViewTextBoxColumn23, this->dataGridViewTextBoxColumn24
+			});
+			this->dataGridView1->Location = System::Drawing::Point(656, 64);
+			this->dataGridView1->Margin = System::Windows::Forms::Padding(5, 6, 5, 6);
+			this->dataGridView1->Name = L"dataGridView1";
+			this->dataGridView1->RowHeadersVisible = false;
+			this->dataGridView1->RowHeadersWidth = 51;
+			this->dataGridView1->Size = System::Drawing::Size(998, 638);
+			this->dataGridView1->TabIndex = 89;
+			// 
+			// dataGridViewTextBoxColumn13
+			// 
+			this->dataGridViewTextBoxColumn13->HeaderText = L"i";
+			this->dataGridViewTextBoxColumn13->MinimumWidth = 6;
+			this->dataGridViewTextBoxColumn13->Name = L"dataGridViewTextBoxColumn13";
+			this->dataGridViewTextBoxColumn13->Width = 60;
+			// 
+			// dataGridViewTextBoxColumn14
+			// 
+			this->dataGridViewTextBoxColumn14->HeaderText = L"x_i";
+			this->dataGridViewTextBoxColumn14->MinimumWidth = 6;
+			this->dataGridViewTextBoxColumn14->Name = L"dataGridViewTextBoxColumn14";
+			this->dataGridViewTextBoxColumn14->ReadOnly = true;
+			this->dataGridViewTextBoxColumn14->Width = 125;
+			// 
+			// dataGridViewTextBoxColumn15
+			// 
+			this->dataGridViewTextBoxColumn15->HeaderText = L"V_i";
+			this->dataGridViewTextBoxColumn15->MinimumWidth = 6;
+			this->dataGridViewTextBoxColumn15->Name = L"dataGridViewTextBoxColumn15";
+			this->dataGridViewTextBoxColumn15->ReadOnly = true;
+			this->dataGridViewTextBoxColumn15->Width = 200;
+			// 
+			// dataGridViewTextBoxColumn16
+			// 
+			this->dataGridViewTextBoxColumn16->HeaderText = L"V_2i";
+			this->dataGridViewTextBoxColumn16->MinimumWidth = 6;
+			this->dataGridViewTextBoxColumn16->Name = L"dataGridViewTextBoxColumn16";
+			this->dataGridViewTextBoxColumn16->Width = 125;
+			// 
+			// dataGridViewTextBoxColumn17
+			// 
+			this->dataGridViewTextBoxColumn17->HeaderText = L"v_i-v_2i";
+			this->dataGridViewTextBoxColumn17->MinimumWidth = 6;
+			this->dataGridViewTextBoxColumn17->Name = L"dataGridViewTextBoxColumn17";
+			this->dataGridViewTextBoxColumn17->Width = 125;
+			// 
+			// dataGridViewTextBoxColumn18
+			// 
+			this->dataGridViewTextBoxColumn18->HeaderText = L"ОЛП";
+			this->dataGridViewTextBoxColumn18->MinimumWidth = 6;
+			this->dataGridViewTextBoxColumn18->Name = L"dataGridViewTextBoxColumn18";
+			this->dataGridViewTextBoxColumn18->Width = 125;
+			// 
+			// dataGridViewTextBoxColumn19
+			// 
+			this->dataGridViewTextBoxColumn19->HeaderText = L"h_i";
+			this->dataGridViewTextBoxColumn19->MinimumWidth = 6;
+			this->dataGridViewTextBoxColumn19->Name = L"dataGridViewTextBoxColumn19";
+			this->dataGridViewTextBoxColumn19->Width = 125;
+			// 
+			// dataGridViewTextBoxColumn20
+			// 
+			this->dataGridViewTextBoxColumn20->HeaderText = L"C1";
+			this->dataGridViewTextBoxColumn20->MinimumWidth = 6;
+			this->dataGridViewTextBoxColumn20->Name = L"dataGridViewTextBoxColumn20";
+			this->dataGridViewTextBoxColumn20->Width = 125;
+			// 
+			// dataGridViewTextBoxColumn21
+			// 
+			this->dataGridViewTextBoxColumn21->HeaderText = L"C2";
+			this->dataGridViewTextBoxColumn21->MinimumWidth = 6;
+			this->dataGridViewTextBoxColumn21->Name = L"dataGridViewTextBoxColumn21";
+			this->dataGridViewTextBoxColumn21->Width = 125;
+			// 
+			// dataGridViewTextBoxColumn22
+			// 
+			this->dataGridViewTextBoxColumn22->HeaderText = L"u_i";
+			this->dataGridViewTextBoxColumn22->MinimumWidth = 6;
+			this->dataGridViewTextBoxColumn22->Name = L"dataGridViewTextBoxColumn22";
+			this->dataGridViewTextBoxColumn22->ReadOnly = true;
+			this->dataGridViewTextBoxColumn22->Width = 125;
+			// 
+			// dataGridViewTextBoxColumn23
+			// 
+			this->dataGridViewTextBoxColumn23->HeaderText = L"|u_i - v_i |";
+			this->dataGridViewTextBoxColumn23->MinimumWidth = 6;
+			this->dataGridViewTextBoxColumn23->Name = L"dataGridViewTextBoxColumn23";
+			this->dataGridViewTextBoxColumn23->Width = 125;
+			// 
+			// dataGridViewTextBoxColumn24
+			// 
+			this->dataGridViewTextBoxColumn24->HeaderText = L"--";
+			this->dataGridViewTextBoxColumn24->MinimumWidth = 6;
+			this->dataGridViewTextBoxColumn24->Name = L"dataGridViewTextBoxColumn24";
+			this->dataGridViewTextBoxColumn24->Width = 125;
+			// 
+			// label10
+			// 
+			this->label10->AccessibleName = L"";
+			this->label10->AutoSize = true;
+			this->label10->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 12, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point,
+				static_cast<System::Byte>(204)));
+			this->label10->Location = System::Drawing::Point(2095, 33);
+			this->label10->Margin = System::Windows::Forms::Padding(4, 0, 4, 0);
+			this->label10->Name = L"label10";
+			this->label10->Size = System::Drawing::Size(118, 25);
+			this->label10->TabIndex = 90;
+			this->label10->Text = L"Таблица V";
+			// 
+			// label11
+			// 
+			this->label11->AccessibleName = L"";
+			this->label11->AutoSize = true;
+			this->label11->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 12, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point,
+				static_cast<System::Byte>(204)));
+			this->label11->Location = System::Drawing::Point(1519, 720);
+			this->label11->Margin = System::Windows::Forms::Padding(4, 0, 4, 0);
+			this->label11->Name = L"label11";
+			this->label11->Size = System::Drawing::Size(147, 25);
+			this->label11->TabIndex = 91;
+			this->label11->Text = L"Таблица u*-V";
+			// 
 			// MyForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(10, 22);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->ClientSize = System::Drawing::Size(2564, 1415);
+			this->Controls->Add(this->label11);
+			this->Controls->Add(this->label10);
+			this->Controls->Add(this->dataGridView1);
+			this->Controls->Add(this->dataGridView3);
 			this->Controls->Add(this->label8);
 			this->Controls->Add(this->textBox3);
 			this->Controls->Add(this->label9);
@@ -1058,7 +1377,7 @@ private: System::Windows::Forms::TextBox^ textBox4;
 			this->Controls->Add(this->textBox2);
 			this->Controls->Add(this->label2);
 			this->Controls->Add(this->textBox1);
-			this->Controls->Add(this->dataGridView1);
+			this->Controls->Add(this->dataGridView2);
 			this->Controls->Add(this->button1);
 			this->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 10.8F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
 				static_cast<System::Byte>(204)));
@@ -1067,6 +1386,8 @@ private: System::Windows::Forms::TextBox^ textBox4;
 			this->Text = L"MyForm";
 			this->WindowState = System::Windows::Forms::FormWindowState::Maximized;
 			this->Load += gcnew System::EventHandler(this, &MyForm::MyForm_Load);
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataGridView2))->EndInit();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataGridView3))->EndInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataGridView1))->EndInit();
 			this->ResumeLayout(false);
 			this->PerformLayout();
@@ -1097,7 +1418,8 @@ private: System::Windows::Forms::TextBox^ textBox4;
 			this->labelEquation->Text =
 				L"Δu(x,y) = -f*(x,y), x ∈ [a,b], y ∈ [c,d]\r\n\r\n" +
 				L"u(a,y) = μ1*(y),  u(b,y) = μ2*(y) при y ∈ [c,d]\r\n" +
-				L"u(x,c) = μ3*(x),  u(x,d) = μ4*(x) при x ∈ [a,b]\r\n\r\n" +
+				L"u(x,c) = μ3*(x),  u(x,d) = μ4*(x) при x ∈ [a,b]\r\n" +
+				L"a = 0, b = 1     c = 0, d = 1\r\n" +
 				L"μ1*(y) = exp(sin²(πay))\r\n" +
 				L"μ2*(y) = exp(sin²(πby))\r\n" +
 				L"μ3*(x) = exp(sin²(πcx))\r\n" +
@@ -1149,6 +1471,8 @@ private: System::Windows::Forms::TextBox^ textBox4;
 				u_star, V, diff, N, eps_N, eps_1, x_err, y_err, R_norm);
 
 			// 3. ЗАПОЛНЕНИЕ ТАБЛИЦЫ (обязательно создание колонок!)
+
+			// u*
 			dataGridView1->Columns->Clear();
 			dataGridView1->Rows->Clear();
 			dataGridView1->Columns->Add("j_col", "j \\ i");
@@ -1161,26 +1485,83 @@ private: System::Windows::Forms::TextBox^ textBox4;
 				array<String^>^ row = gcnew array<String^>(n + 2);
 				row[0] = j.ToString();
 				for (int i = 0; i <= n; i++) {
-					row[i + 1] = diff[i][j].ToString("E2"); // Вывод погрешности |u*-v|
+					row[i + 1] = u_star[i][j].ToString("E2"); // Вывод погрешности |u*-v|
 				}
 				dataGridView1->Rows->Add(row);
+			}
+			// v
+			dataGridView2->Columns->Clear();
+			dataGridView2->Rows->Clear();
+			dataGridView2->Columns->Add("j_col", "j \\ i");
+			for (int i = 0; i <= n; i++) {
+				dataGridView2->Columns->Add("i" + i, i.ToString());
+				dataGridView2->Columns[i + 1]->Width = 70;
+			}
+
+			for (int j = 0; j <= m; j++) {
+				array<String^>^ row = gcnew array<String^>(n + 2);
+				row[0] = j.ToString();
+				for (int i = 0; i <= n; i++) {
+					row[i + 1] = V[i][j].ToString("E2"); // Вывод погрешности |u*-v|
+				}
+				dataGridView2->Rows->Add(row);
+			}
+
+			// difference
+			dataGridView3->Columns->Clear();
+			dataGridView3->Rows->Clear();
+			dataGridView3->Columns->Add("j_col", "j \\ i");
+			for (int i = 0; i <= n; i++) {
+				dataGridView3->Columns->Add("i" + i, i.ToString());
+				dataGridView3->Columns[i + 1]->Width = 70;
+			}
+
+			for (int j = 0; j <= m; j++) {
+				array<String^>^ row = gcnew array<String^>(n + 2);
+				row[0] = j.ToString();
+				for (int i = 0; i <= n; i++) {
+					row[i + 1] = diff[i][j].ToString("E2"); // Вывод погрешности |u*-v|
+				}
+				dataGridView3->Rows->Add(row);
 			}
 
 			// 4. ФОРМИРОВАНИЕ СПРАВКИ (по образцу бланка отчета)
 			System::Text::StringBuilder^ sb = gcnew System::Text::StringBuilder();
 			sb->AppendLine("СПРАВКА (Тестовая задача)");
 			sb->AppendLine("------------------------------------------------------------------");
+			sb->AppendLine("Начально приближение: линейная интерполяция ГУ по y. ");
+			sb->AppendLine("------------------------------------------------------------------");
 			sb->AppendFormat("Сетка: n={0}, m={1}\r\n", n, m);
 			sb->AppendFormat("Шаги: hx={0:F4}, hy={1:F4}\r\n", (b - a) / n, (d - c) / m);
-			sb->AppendFormat("Параметры МВР: омега={0}, эпсилон_мет={1:E1}, N_max={2}\r\n", omega, eps_met, n_max);
+			sb->AppendFormat("Параметры МВР:\r\n");
+			sb->AppendFormat("омега={0}, эпсилон_мет={1:E1}, N_max={2}\r\n", omega, eps_met, n_max);
 			sb->AppendLine("------------------------------------------------------------------");
 			sb->AppendFormat("Затрачено итераций N: \t{0}\r\n", N);
-			sb->AppendFormat("Достигнутая точность ε(N): \t{0:E4}\r\n", eps_N);
+			sb->AppendFormat("Достигнутая точность эпсилон(N): \t{0:E4}\r\n", eps_N);
 			sb->AppendFormat("Погрешность эпсилон1 (max|u*-v|): \t{0:E4}\r\n", eps_1);
 			sb->AppendFormat("  в узле: \t\t(x={0:F3}, y={1:F3})\r\n", x_err, y_err);
 			sb->AppendFormat("Норма невязки ||R||: \t{0:E4}\r\n", R_norm);
 
 			labelTestInfo->Text = sb->ToString();
+
+			// 4. ЭКСПОРТ ДАННЫХ ДЛЯ PYTHON
+			std::ofstream out("plot_data.csv");
+			out << n << "," << m << "," << a << "," << b << "," << c << "," << d << "\n";
+			// Записываем матрицу V (Численное решение)
+			for (int j = 0; j <= m; j++) {
+				for (int i = 0; i <= n; i++) {
+					out << V[i][j] << (i == n ? "" : ",");
+				}
+				out << "\n";
+			}
+			// Записываем матрицу u_star (Точное решение)
+			for (int j = 0; j <= m; j++) {
+				for (int i = 0; i <= n; i++) {
+					out << u_star[i][j] << (i == n ? "" : ",");
+				}
+				out << "\n";
+			}
+			out.close();
 
 			// 5. Вызов Python
 			System::Diagnostics::ProcessStartInfo^ startInfo = gcnew System::Diagnostics::ProcessStartInfo();
