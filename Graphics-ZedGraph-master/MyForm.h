@@ -73,7 +73,8 @@ static void MBP(
 				+ 1 / hh * V[i + 1][j]
 				+ 1 / kk * V[i][j - 1]
 				+ 1 / kk * V[i][j + 1];
-			V[i][j] = -1 / A * ((1-w)*(-A)*V[i][j] + w * arg);
+			//V[i][j] = -1 / A * ((1-w)*(-A)*V[i][j] + w * arg);
+			V[i][j] = (1 - w) * V[i][j] + w * arg/(-A);
 		}
 	}
 
@@ -135,7 +136,8 @@ static void solveDirichleForPuasson(
 	double& eps_1,        // Погрешность задачи max|u* - v|
 	double& x_max_err,    // x, где max погрешность
 	double& y_max_err,    // y, где max погрешность
-	double& R_norm        // Норма невязки ||R||
+	double& R_norm_start,       // Норма невязки ||R||
+	double& R_norm_end
 )
 {
 
@@ -188,6 +190,20 @@ static void solveDirichleForPuasson(
 
 
 	// ========== интерполяция внутренних узлов (линейно по Y)
+
+
+	double hh = h * h;
+	double kk = k * k;
+	R_norm_start = -1;
+
+	for (int i = 1; i < n; ++i) {
+		for (int j = 1; j < m; ++j) {
+			double R = (V[i + 1][j] - 2 * V[i][j] + V[i - 1][j]) / hh + (V[i][j + 1] - 2 * V[i][j] + V[i][j - 1]) / kk + f_xy_func(x[i], y[j]);
+			R_norm_start = std::max(R_norm_start, std::abs(R));
+		}
+	}
+
+
 
 	for (int i = 1; i <= n - 1; ++i) {
 
@@ -246,14 +262,13 @@ static void solveDirichleForPuasson(
 
 
 	
-	double hh = h * h;
-	double kk = k * k;
-	R_norm = -1;
+	
+	R_norm_end = -1;
 
 	for (int i = 1; i < n; ++i) {
 		for (int j = 1; j < m; ++j) {
 			double R = (V[i + 1][j] - 2 * V[i][j] + V[i - 1][j]) / hh + (V[i][j + 1] - 2 * V[i][j] + V[i][j - 1]) / kk + f_xy_func(x[i],y[j]);
-			R_norm = std::max(R_norm,std::abs(R));
+			R_norm_end = std::max(R_norm_end,std::abs(R));
 		}
 	}
 
@@ -580,6 +595,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^ dataGridViewTextBoxC
 private: System::Windows::Forms::DataGridViewTextBoxColumn^ dataGridViewTextBoxColumn24;
 private: System::Windows::Forms::Label^ label10;
 private: System::Windows::Forms::Label^ label11;
+private: System::Windows::Forms::CheckBox^ checkBoxOmega;
 
 
 
@@ -712,6 +728,7 @@ private: System::Windows::Forms::Label^ label11;
 			this->dataGridViewTextBoxColumn24 = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
 			this->label10 = (gcnew System::Windows::Forms::Label());
 			this->label11 = (gcnew System::Windows::Forms::Label());
+			this->checkBoxOmega = (gcnew System::Windows::Forms::CheckBox());
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataGridView2))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataGridView3))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataGridView1))->BeginInit();
@@ -1344,11 +1361,22 @@ private: System::Windows::Forms::Label^ label11;
 			this->label11->TabIndex = 91;
 			this->label11->Text = L"Таблица u*-V";
 			// 
+			// checkBoxOmega
+			// 
+			this->checkBoxOmega->AutoSize = true;
+			this->checkBoxOmega->Location = System::Drawing::Point(468, 674);
+			this->checkBoxOmega->Name = L"checkBoxOmega";
+			this->checkBoxOmega->Size = System::Drawing::Size(149, 26);
+			this->checkBoxOmega->TabIndex = 92;
+			this->checkBoxOmega->Text = L"Оптимальный";
+			this->checkBoxOmega->UseVisualStyleBackColor = true;
+			// 
 			// MyForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(10, 22);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->ClientSize = System::Drawing::Size(2564, 1415);
+			this->Controls->Add(this->checkBoxOmega);
 			this->Controls->Add(this->label11);
 			this->Controls->Add(this->label10);
 			this->Controls->Add(this->dataGridView1);
@@ -1459,16 +1487,37 @@ private: System::Windows::Forms::Label^ label11;
 			int m = Convert::ToInt32(textBoxM->Text);
 			double eps_met = Convert::ToDouble(textBoxEps->Text);
 			int n_max = Convert::ToInt32(textBoxNmax->Text);
-			double omega = Convert::ToDouble(textBoxOmega->Text);
+			
+			double omega;
+			// Проверяем, стоит ли галочка автоматического расчета оптимального omega
+			if (checkBoxOmega->Checked) {
+				double h = (b - a) / n;
+				double k = (d - c) / m;
+				double h2 = 1.0 / (h * h);
+				double k2 = 1.0 / (k * k);
+
+				// Спектральный радиус матрицы Якоби
+				double rho = (cos(M_PI / n) * h2 + cos(M_PI / m) * k2) / (h2 + k2);
+
+				// Оптимальный параметр релаксации
+				omega = 2.0 / (1.0 + sqrt(1.0 - rho * rho));
+
+				// Выводим посчитанное значение в текстовое поле, чтобы пользователь его видел
+				textBoxOmega->Text = omega.ToString("F4");
+			}
+			else {
+				// Если галочки нет, считываем значение из текстового поля
+				omega = Convert::ToDouble(textBoxOmega->Text);
+			}
 
 			// 2. Расчет
 			std::vector<std::vector<double>> u_star(n + 1, std::vector<double>(m + 1));
 			std::vector<std::vector<double>> V(n + 1, std::vector<double>(m + 1, 0.0));
 			std::vector<std::vector<double>> diff(n + 1, std::vector<double>(m + 1));
-			int N = 0; double eps_N = 0, eps_1 = 0, x_err = 0, y_err = 0, R_norm = 0;
+			int N = 0; double eps_N = 0, eps_1 = 0, x_err = 0, y_err = 0, R_norm_start , R_norm_end = 0;
 
 			solveDirichleForPuasson(a, b, c, d, n, m, eps_met, n_max, omega,
-				u_star, V, diff, N, eps_N, eps_1, x_err, y_err, R_norm);
+				u_star, V, diff, N, eps_N, eps_1, x_err, y_err, R_norm_start, R_norm_end);
 
 			// 3. ЗАПОЛНЕНИЕ ТАБЛИЦЫ (обязательно создание колонок!)
 
@@ -1537,10 +1586,11 @@ private: System::Windows::Forms::Label^ label11;
 			sb->AppendFormat("омега={0}, эпсилон_мет={1:E1}, N_max={2}\r\n", omega, eps_met, n_max);
 			sb->AppendLine("------------------------------------------------------------------");
 			sb->AppendFormat("Затрачено итераций N: \t{0}\r\n", N);
-			sb->AppendFormat("Достигнутая точность эпсилон(N): \t{0:E4}\r\n", eps_N);
+			sb->AppendFormat("Достигнутая погрешность эпсилон(N): \t{0:E4}\r\n", eps_N);
 			sb->AppendFormat("Погрешность эпсилон1 (max|u*-v|): \t{0:E4}\r\n", eps_1);
 			sb->AppendFormat("  в узле: \t\t(x={0:F3}, y={1:F3})\r\n", x_err, y_err);
-			sb->AppendFormat("Норма невязки ||R||: \t{0:E4}\r\n", R_norm);
+			sb->AppendFormat("Норма невязки ||R0||: \t{0:E4}\r\n", R_norm_start);
+			sb->AppendFormat("Норма невязки ||RN||: \t{0:E4}\r\n", R_norm_end);
 
 			labelTestInfo->Text = sb->ToString();
 
